@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### ⛰️  Features
 
+- Add a changelog - ([620b999](https://github.com/orhun/git-cliff/commit/620b9992b3b048dc1dcbfbd9ff4af31b83243713))
 - First working prototype - ([82f54e0](https://github.com/orhun/git-cliff/commit/82f54e095060d4736fa315d12c3673e37e790bc5))
 - Initial commit! - ([3516d85](https://github.com/orhun/git-cliff/commit/3516d85698ff844e7a7397d04299994aa33606e4))
 
