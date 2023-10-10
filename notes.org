@@ -1,0 +1,61 @@
+* The Problem
+** Objectives
+- handle 5 simultaneous TCP connections
+- if a malformed request is received, send a malformed response
+- negative numbers cannot be prime
+
+** Request
+- example ~{"method":"isPrime","number":123}~
+  - ~method~ must be the string ~isPrime~
+  - ~number~ must be a number
+- ignore any extra fields
+
+** Response
+- example ~{"method":"isPrime","prime":false}~
+  - ~method~ must be the string ~isPrime~
+  - ~prime~ must be a boolean
+
+* Plan
+** DONE Test Primality
+*** Function
+1. Create a function that takes an integer and returns a bool for prime
+
+*** Test
+- test a bunch of numbers
+
+** DONE Serialize A Request
+1. Create a test
+2. Create a function that takes JSON and returns a request type or error.
+
+** DONE Deserialize A Response
+1. Create a test
+2. Create a function that takes a response type and returns JSON
+
+** TODO Setup Networking
+*** Function
+1. open a socket
+2. accept connections
+3. handle a connection
+
+*** Test
+1. Pass a ~SocketAddr~ to the function
+2. Not Sure?
+   1.
+
+** TODO Create A Handler Function
+*** Function
+1. Read a string from the connection
+2. Call serialize function
+   1. if an error is returned, return a malformed response
+3. Call primality function
+4. Create a response
+5. Call deserialize response
+6. Send response
+
+*** Test
+- mock the stream? https://rust-lang.github.io/async-book/09_example/03_tests.html
+
+
+* Lessons Learned
+- when doing TDD it is easier to start from the smaller functions and work up
+- start with tracing
