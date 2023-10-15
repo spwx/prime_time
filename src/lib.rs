@@ -1,9 +1,12 @@
+use std::net::SocketAddr;
+
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
     net::{TcpListener, TcpStream},
 };
+use tracing::Instrument;
 
 #[derive(Error, Debug)]
 pub enum PrimeTimeError {
@@ -27,19 +30,27 @@ struct Response {
     prime: bool,
 }
 
-pub async fn run(socket: &str) -> Result<(), PrimeTimeError> {
+pub async fn run(socket: SocketAddr) -> Result<(), PrimeTimeError> {
+    tracing::info!("Listening on {}", socket);
+
     let listener = TcpListener::bind(socket).await?;
 
     loop {
         let (stream, _) = listener.accept().await?;
 
+        let span = tracing::span!(
+            tracing::Level::INFO,
+            "Connection", client = %stream.peer_addr()?
+        );
         // first result is the tokio task handle, second is the result of
         // `handle_connection`
-        tokio::spawn(hanndle_connection(stream)).await??;
+        tokio::spawn(hanndle_connection(stream).instrument(span)).await??;
     }
 }
 
 async fn hanndle_connection(mut stream: TcpStream) -> Result<(), PrimeTimeError> {
+    tracing::info!("Connected");
+
     let (mut reader, mut writer) = stream.split();
 
     let mut buf_reader = BufReader::new(&mut reader);
@@ -50,17 +61,23 @@ async fn hanndle_connection(mut stream: TcpStream) -> Result<(), PrimeTimeError>
         let bytes_read = buf_reader.read_line(&mut line).await?;
 
         if bytes_read == 0 {
+            tracing::info!("Disconnected");
             return Ok(());
         }
 
-        match handle_request(line) {
-            Ok(r) => writer.write_all(r.as_bytes()).await?,
-            Err(_) => writer.write_all(b"Invalid JSON\n").await?,
-        }
+        let response = match handle_request(line) {
+            Ok(r) => r,
+            Err(_) => "Invalid JSON\n".to_string(),
+        };
+
+        tracing::info!(sending = ?response);
+        writer.write_all(response.as_bytes()).await?;
     }
 }
 
 fn handle_request(json: String) -> Result<String, PrimeTimeError> {
+    tracing::info!(received = ?json);
+
     let request: Request = serde_json::from_str(&json)?;
 
     let prime = is_prime(request.number);
@@ -72,6 +89,7 @@ fn handle_request(json: String) -> Result<String, PrimeTimeError> {
 
     let mut response = serde_json::to_string(&response)?;
     response.push('\n');
+
     Ok(response)
 }
 
@@ -95,17 +113,17 @@ mod tests {
 
     #[test]
     fn test_is_prime() {
-        assert_eq!(is_prime(0), false);
-        assert_eq!(is_prime(1), false);
-        assert_eq!(is_prime(2), true);
-        assert_eq!(is_prime(3), true);
-        assert_eq!(is_prime(4), false);
-        assert_eq!(is_prime(5), true);
-        assert_eq!(is_prime(16), false);
-        assert_eq!(is_prime(17), true);
-        assert_eq!(is_prime(18), false);
-        assert_eq!(is_prime(19), true);
-        assert_eq!(is_prime(13), true);
+        assert!(!is_prime(0));
+        assert!(!is_prime(1));
+        assert!(is_prime(2));
+        assert!(is_prime(3));
+        assert!(!is_prime(4));
+        assert!(is_prime(5));
+        assert!(!is_prime(16));
+        assert!(is_prime(17));
+        assert!(!is_prime(18));
+        assert!(is_prime(19));
+        assert!(is_prime(13));
     }
 
     #[test]
@@ -175,9 +193,8 @@ mod tests {
     async fn test_run() {
         // Spin up the server using the run function
         tokio::spawn(async {
-            run("127.0.0.1:58282")
-                .await
-                .expect("Could not bind to socket");
+            let socket = SocketAddr::from(([127, 0, 0, 1], 8282));
+            run(socket).await.expect("Could not bind to socket");
         });
 
         // Give the server some time to start
@@ -205,9 +222,9 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_run_2() {
-        run("127.0.0.1:58282")
-            .await
-            .expect("Could not bind to socket");
+        let socket = SocketAddr::from(([127, 0, 0, 1], 8282));
+
+        run(socket).await.expect("Could not bind to socket");
 
         let mut connection = TcpStream::connect("127.0.0.1:8282")
             .await
