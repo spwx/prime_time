@@ -71,7 +71,14 @@ async fn hanndle_connection(mut stream: TcpStream) -> Result<(), PrimeTimeError>
         };
 
         tracing::info!(sending = ?response);
-        writer.write_all(response.as_bytes()).await?;
+
+        match writer.write_all(response.as_bytes()).await {
+            Ok(_) => (),
+            Err(e) => {
+                tracing::error!("Failed to write to socket: {}", e);
+                return Ok(());
+            }
+        }
     }
 }
 
