@@ -2,11 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.3.1](https://github.com/orhun/git-cliff/compare/v0.3.0..0.3.1) - 2023-10-15
+## [0.3.2](https://github.com/orhun/git-cliff/compare/v0.3.1..0.3.2) - 2023-10-15
+
+### 🐛 Bug Fixes
+
+- Handle multiple connectsions at the same time - ([bf7fc16](https://github.com/orhun/git-cliff/commit/bf7fc169b8b73fc4830d2c373de3fdb04af62014))
+
+## [0.3.1](https://github.com/orhun/git-cliff/compare/v0.3.0..v0.3.1) - 2023-10-15
 
 ### 🐛 Bug Fixes
 
 - Handle early disconnects - ([d0bf1dd](https://github.com/orhun/git-cliff/commit/d0bf1dd14eaffe911e659f32a4315b64a2179c8c))
+
+### ⚙️ Miscellaneous Tasks
+
+- Release prime_time version 0.3.1 - ([5307a3e](https://github.com/orhun/git-cliff/commit/5307a3e13c3fd6abb0b3f2eb7565572d37946552))
 
 ## [0.3.0](https://github.com/orhun/git-cliff/compare/v0.2.0..v0.3.0) - 2023-10-15
 
