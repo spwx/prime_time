@@ -21,7 +21,7 @@ pub enum PrimeTimeError {
 #[derive(Deserialize, Debug, PartialEq)]
 struct Request {
     method: String,
-    number: u64,
+    number: i64,
 }
 
 #[derive(Serialize, Debug, PartialEq)]
@@ -93,13 +93,14 @@ fn handle_request(json: String) -> Result<String, PrimeTimeError> {
     Ok(response)
 }
 
-fn is_prime(n: u64) -> bool {
+fn is_prime(n: i64) -> bool {
     match n {
         0 | 1 => false,
         2 => true,
+        _ if n < 0 => false,      // negative numbers are not prime
         _ if n % 2 == 0 => false, // early return for even numbers
         _ => {
-            let sqrt = (n as f64).sqrt() as u64;
+            let sqrt = (n as f64).sqrt() as i64;
             (3..=sqrt).step_by(2).all(|i| n % i != 0)
         }
     }
@@ -124,6 +125,7 @@ mod tests {
         assert!(!is_prime(18));
         assert!(is_prime(19));
         assert!(is_prime(13));
+        assert!(!is_prime(-13));
     }
 
     #[test]
