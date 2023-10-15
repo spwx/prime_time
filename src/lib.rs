@@ -42,9 +42,8 @@ pub async fn run(socket: SocketAddr) -> Result<(), PrimeTimeError> {
             tracing::Level::INFO,
             "Connection", client = %stream.peer_addr()?
         );
-        // first result is the tokio task handle, second is the result of
-        // `handle_connection`
-        tokio::spawn(hanndle_connection(stream).instrument(span)).await??;
+
+        tokio::spawn(hanndle_connection(stream).instrument(span));
     }
 }
 
