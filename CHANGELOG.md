@@ -2,11 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.3.0](https://github.com/orhun/git-cliff/compare/v0.2.0..0.3.0) - 2023-10-15
+## [0.3.1](https://github.com/orhun/git-cliff/compare/v0.3.0..0.3.1) - 2023-10-15
+
+### 🐛 Bug Fixes
+
+- Handle early disconnects - ([d0bf1dd](https://github.com/orhun/git-cliff/commit/d0bf1dd14eaffe911e659f32a4315b64a2179c8c))
+
+## [0.3.0](https://github.com/orhun/git-cliff/compare/v0.2.0..v0.3.0) - 2023-10-15
 
 ### ⛰️  Features
 
 - Handle negative numbers too - ([1235d9d](https://github.com/orhun/git-cliff/commit/1235d9d0cd56f840b6074e151ca770fb5effa53d))
+
+### ⚙️ Miscellaneous Tasks
+
+- Release prime_time version 0.3.0 - ([c163d5e](https://github.com/orhun/git-cliff/commit/c163d5e0b11c84150ac9dff3431a29441283c6d1))
 
 ## [0.2.0](https://github.com/orhun/git-cliff/compare/v0.1.0..v0.2.0) - 2023-10-15
 
