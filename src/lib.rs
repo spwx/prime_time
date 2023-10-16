@@ -1,5 +1,7 @@
 use std::net::SocketAddr;
 
+use num_bigint::BigInt;
+use num_prime::nt_funcs::is_prime;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio::{
@@ -21,7 +23,17 @@ pub enum PrimeTimeError {
 #[derive(Deserialize, Debug, PartialEq)]
 struct Request {
     method: String,
-    number: i64,
+    #[serde(deserialize_with = "bigint_from_number")]
+    number: BigInt,
+}
+
+fn bigint_from_number<'de, D>(deserializer: D) -> Result<BigInt, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let n = serde_json::Number::deserialize(deserializer)?;
+    println!("n: {:?}", n);
+    return Ok(BigInt::parse_bytes(n.to_string().as_bytes(), 10).unwrap());
 }
 
 #[derive(Serialize, Debug, PartialEq)]
@@ -43,7 +55,7 @@ pub async fn run(socket: SocketAddr) -> Result<(), PrimeTimeError> {
             "Connection", client = %stream.peer_addr()?
         );
 
-        tokio::spawn(hanndle_connection(stream).instrument(span));
+        tokio::spawn(async move { hanndle_connection(stream).instrument(span).await }).await??;
     }
 }
 
@@ -86,7 +98,10 @@ fn handle_request(json: String) -> Result<String, PrimeTimeError> {
 
     let request: Request = serde_json::from_str(&json)?;
 
-    let prime = is_prime(request.number);
+    let prime = match request.number.into_parts() {
+        (num_bigint::Sign::Minus, _) => false,
+        (_, biguint) => is_prime(&biguint, None).probably(),
+    };
 
     let response = Response {
         method: request.method,
@@ -99,40 +114,11 @@ fn handle_request(json: String) -> Result<String, PrimeTimeError> {
     Ok(response)
 }
 
-fn is_prime(n: i64) -> bool {
-    match n {
-        0 | 1 => false,
-        2 => true,
-        _ if n < 0 => false,      // negative numbers are not prime
-        _ if n % 2 == 0 => false, // early return for even numbers
-        _ => {
-            let sqrt = (n as f64).sqrt() as i64;
-            (3..=sqrt).step_by(2).all(|i| n % i != 0)
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use tokio::{io::AsyncReadExt, net::TcpListener};
 
     use super::*;
-
-    #[test]
-    fn test_is_prime() {
-        assert!(!is_prime(0));
-        assert!(!is_prime(1));
-        assert!(is_prime(2));
-        assert!(is_prime(3));
-        assert!(!is_prime(4));
-        assert!(is_prime(5));
-        assert!(!is_prime(16));
-        assert!(is_prime(17));
-        assert!(!is_prime(18));
-        assert!(is_prime(19));
-        assert!(is_prime(13));
-        assert!(!is_prime(-13));
-    }
 
     #[test]
     fn test_deserialize_request() {
@@ -145,7 +131,7 @@ mod tests {
 
         let expected_request = Request {
             method: "isPrime".to_string(),
-            number: 30,
+            number: BigInt::from(30),
         };
 
         let request: Request = serde_json::from_str(json_data).unwrap();
@@ -165,7 +151,7 @@ mod tests {
 
         let expected_request = Request {
             method: "isPrime".to_string(),
-            number: 30,
+            number: BigInt::from(30),
         };
 
         let request: Request = serde_json::from_str(json).unwrap();
