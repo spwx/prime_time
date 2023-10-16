@@ -2,11 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.3.2](https://github.com/orhun/git-cliff/compare/v0.3.1..0.3.2) - 2023-10-15
+## [0.4.0](https://github.com/orhun/git-cliff/compare/v0.3.2..0.4.0) - 2023-10-16
+
+### ⛰️  Features
+
+- Add handling of large numbers - ([07e8fea](https://github.com/orhun/git-cliff/commit/07e8fea66f94b75c9254422aa4405d87d10da9dc))
+
+## [0.3.2](https://github.com/orhun/git-cliff/compare/v0.3.1..v0.3.2) - 2023-10-15
 
 ### 🐛 Bug Fixes
 
 - Handle multiple connectsions at the same time - ([bf7fc16](https://github.com/orhun/git-cliff/commit/bf7fc169b8b73fc4830d2c373de3fdb04af62014))
+
+### ⚙️ Miscellaneous Tasks
+
+- Release prime_time version 0.3.2 - ([6738290](https://github.com/orhun/git-cliff/commit/67382902458768fa119a129f3552e43db4bfa9dd))
 
 ## [0.3.1](https://github.com/orhun/git-cliff/compare/v0.3.0..v0.3.1) - 2023-10-15
 
