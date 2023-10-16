@@ -32,6 +32,7 @@ where
     D: serde::Deserializer<'de>,
 {
     let n = serde_json::Number::deserialize(deserializer)?;
+    dbg!(&n);
 
     match BigInt::parse_bytes(n.to_string().as_bytes(), 10) {
         Some(n) => Ok(n),
@@ -183,6 +184,22 @@ mod tests {
         output.push('\n');
 
         assert_eq!(handle_request(input).unwrap(), output);
+    }
+
+    #[test]
+    fn test_handle_request_bigint() {
+        let input = r#"{ "method": "isPrime", "number": 529830422160613455916930483453466154480529308265681626708 }"#.to_string();
+        let mut output = r#"{"method":"isPrime","prime":false}"#.to_string();
+        output.push('\n');
+
+        assert_eq!(handle_request(input).unwrap(), output);
+    }
+
+    #[test]
+    fn test_handle_request_float() {
+        let input = r#"{ "method": "isPrime", "number": 1.234 }"#.to_string();
+
+        assert!(handle_request(input).is_err());
     }
 
     #[tokio::test]
