@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 
 use num_bigint::BigInt;
 use num_prime::nt_funcs::is_prime;
-use serde::{Deserialize, Serialize};
+use serde::{de::Error, Deserialize, Serialize};
 use thiserror::Error;
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
@@ -32,8 +32,11 @@ where
     D: serde::Deserializer<'de>,
 {
     let n = serde_json::Number::deserialize(deserializer)?;
-    println!("n: {:?}", n);
-    return Ok(BigInt::parse_bytes(n.to_string().as_bytes(), 10).unwrap());
+
+    match BigInt::parse_bytes(n.to_string().as_bytes(), 10) {
+        Some(n) => Ok(n),
+        None => Err(D::Error::custom("Invalid number")),
+    }
 }
 
 #[derive(Serialize, Debug, PartialEq)]
