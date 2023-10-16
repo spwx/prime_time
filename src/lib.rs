@@ -55,7 +55,7 @@ pub async fn run(socket: SocketAddr) -> Result<(), PrimeTimeError> {
             "Connection", client = %stream.peer_addr()?
         );
 
-        tokio::spawn(async move { hanndle_connection(stream).instrument(span).await }).await??;
+        tokio::spawn(hanndle_connection(stream).instrument(span));
     }
 }
 
