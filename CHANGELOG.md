@@ -2,11 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.4.1](https://github.com/orhun/git-cliff/compare/v0.4.0..0.4.1) - 2023-10-16
+## [0.4.2](https://github.com/orhun/git-cliff/compare/v0.4.1..0.4.2) - 2023-10-16
+
+### 🐛 Bug Fixes
+
+- Handle number's with decimals - ([3535ebb](https://github.com/orhun/git-cliff/commit/3535ebb75f92e1771f489a67fd20fa4d3c812d41))
+
+## [0.4.1](https://github.com/orhun/git-cliff/compare/v0.4.0..v0.4.1) - 2023-10-16
 
 ### 🐛 Bug Fixes
 
 - Handle multiple connections, again... - ([f581ba0](https://github.com/orhun/git-cliff/commit/f581ba07e34e58897f3fb040be6e1bff3eeace90))
+
+### ⚙️ Miscellaneous Tasks
+
+- Release prime_time version 0.4.1 - ([3aad63b](https://github.com/orhun/git-cliff/commit/3aad63bbad924808c1555c3b6055d4ac583e07db))
 
 ## [0.4.0](https://github.com/orhun/git-cliff/compare/v0.3.2..v0.4.0) - 2023-10-16
 
