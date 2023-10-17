@@ -2,11 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.4.5](https://github.com/orhun/git-cliff/compare/v0.4.4..0.4.5) - 2023-10-17
+## [0.4.6](https://github.com/orhun/git-cliff/compare/v0.4.5..0.4.6) - 2023-10-17
+
+### 🐛 Bug Fixes
+
+- Change order of parsing - ([43b6cd7](https://github.com/orhun/git-cliff/commit/43b6cd76cb1df558af3cc414a79880afece0f184))
+
+## [0.4.5](https://github.com/orhun/git-cliff/compare/v0.4.4..v0.4.5) - 2023-10-17
 
 ### 🐛 Bug Fixes
 
 - Handle number values with quotes - ([8a4fe15](https://github.com/orhun/git-cliff/commit/8a4fe15ba00c9ec288189b458c1d4fdddb59c20d))
+
+### ⚙️ Miscellaneous Tasks
+
+- Release prime_time version 0.4.5 - ([dd4ff3b](https://github.com/orhun/git-cliff/commit/dd4ff3b7801d45177c85282bbf1b8b57bcc82a9e))
 
 ## [0.4.4](https://github.com/orhun/git-cliff/compare/v0.4.3..v0.4.4) - 2023-10-17
 
