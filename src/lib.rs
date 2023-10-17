@@ -2,8 +2,8 @@ use std::net::SocketAddr;
 
 use num_bigint::BigInt;
 use num_prime::nt_funcs::is_prime;
-use serde::{Deserialize, Serialize};
-use serde_json::value::RawValue;
+use serde::{de::Error, Deserialize, Serialize};
+use serde_json::Number;
 use thiserror::Error;
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
@@ -21,11 +21,34 @@ pub enum PrimeTimeError {
     JoinError(#[from] tokio::task::JoinError),
 }
 
-#[derive(Deserialize, Debug)]
-struct Request<'a> {
+#[derive(Deserialize, Debug, PartialEq)]
+struct Request {
     method: String,
-    #[serde(borrow)]
-    number: &'a RawValue,
+    #[serde(deserialize_with = "deserialize_number")]
+    number: RequestNumber,
+}
+
+#[derive(Debug, PartialEq)]
+enum RequestNumber {
+    Float(f64),
+    BigInt(BigInt),
+}
+
+fn deserialize_number<'de, D>(deserializer: D) -> Result<RequestNumber, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let num = Number::deserialize(deserializer)?;
+
+    if let Some(f) = num.as_f64() {
+        return Ok(RequestNumber::Float(f));
+    }
+
+    if let Some(n) = BigInt::parse_bytes(num.to_string().as_bytes(), 10) {
+        return Ok(RequestNumber::BigInt(n));
+    }
+
+    Err(D::Error::custom("Invalid number value"))
 }
 
 #[derive(Serialize, Debug, PartialEq)]
@@ -89,21 +112,14 @@ fn handle_request(json: String) -> Result<String, PrimeTimeError> {
     tracing::info!(received = ?json);
 
     let request: Request = serde_json::from_str(&json)?;
-    dbg!(&request);
 
-    let mut prime = false;
-
-    let num = request.number.get();
-    if num.parse::<i64>().is_ok() {
-        prime = false;
-    }
-
-    if let Some(n) = BigInt::parse_bytes(num.as_bytes(), 10) {
-        prime = match n.into_parts() {
+    let prime = match request.number {
+        RequestNumber::Float(_) => false,
+        RequestNumber::BigInt(n) => match n.into_parts() {
             (num_bigint::Sign::Minus, _) => false,
             (_, n) => is_prime(&n, None).probably(),
-        }
-    }
+        },
+    };
 
     let response = Response {
         method: request.method,
@@ -118,26 +134,10 @@ fn handle_request(json: String) -> Result<String, PrimeTimeError> {
 
 #[cfg(test)]
 mod tests {
-    use tokio::{io::AsyncReadExt, net::TcpListener};
-
     use super::*;
 
     #[test]
-    fn test_serialize_response() {
-        let response = Response {
-            method: "isPrime".to_string(),
-            prime: true,
-        };
-
-        let expected_response = r#"{"method":"isPrime","prime":true}"#;
-
-        let json = serde_json::to_string(&response).unwrap();
-
-        assert_eq!(json, expected_response);
-    }
-
-    #[test]
-    fn test_handle_request() {
+    fn test_handle_request_extra_fields() {
         let input = r#"{ "method": "isPrime", "number": 30, "yolo": "swag" }"#.to_string();
         let mut output = r#"{"method":"isPrime","prime":false}"#.to_string();
         output.push('\n');
@@ -163,101 +163,10 @@ mod tests {
         assert_eq!(handle_request(input).unwrap(), output);
     }
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_run() {
-        // Spin up the server using the run function
-        tokio::spawn(async {
-            let socket = SocketAddr::from(([127, 0, 0, 1], 8282));
-            run(socket).await.expect("Could not bind to socket");
-        });
+    #[test]
+    fn test_handle_request_string() {
+        let input = r#"{ "method": "isPrime", "number": "6017832" }"#.to_string();
 
-        // Give the server some time to start
-        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
-
-        // Connect to the server and send a request
-        let mut connection = TcpStream::connect("127.0.0.1:58282")
-            .await
-            .expect("Failed to connect");
-
-        let (mut reader, mut writer) = connection.split();
-
-        let input = br#"{ "method": "isPrime", "number": 30, "yolo": "swag" }"#;
-        writer.write_all(input).await.unwrap();
-
-        let mut buf = String::new();
-        let mut buffered_reader = BufReader::new(&mut reader);
-        buffered_reader.read_line(&mut buf).await.unwrap();
-
-        let output = r#"{"method":"isPrime","prime":false}"#.to_string();
-
-        assert_eq!(buf, output);
-    }
-
-    #[tokio::test]
-    #[ignore]
-    async fn test_run_2() {
-        let socket = SocketAddr::from(([127, 0, 0, 1], 8282));
-
-        run(socket).await.expect("Could not bind to socket");
-
-        let mut connection = TcpStream::connect("127.0.0.1:8282")
-            .await
-            .expect("Failed to connect");
-
-        let (mut reader, mut writer) = connection.split();
-
-        let input = br#"{ "method": "isPrime", "number": 30, "yolo": "swag" }"#;
-        writer.write_all(input).await.unwrap();
-
-        let mut buf = String::new();
-        let mut buffered_reader = BufReader::new(&mut reader);
-        buffered_reader.read_line(&mut buf).await.unwrap();
-
-        let output = r#"{"method":"isPrime","prime":false}"#.to_string();
-
-        assert_eq!(buf, output);
-    }
-
-    #[tokio::test]
-    #[ignore]
-    async fn test_handle_connection() {
-        // Create a server
-        let server = TcpListener::bind("127.0.0.1:0")
-            .await
-            .expect("Failed to bind");
-
-        // Get the address of the server
-        let socket = server.local_addr().expect("Failed to get socket address");
-
-        // Accept and handle a connection
-        tokio::spawn(async move {
-            let (connection, _) = server
-                .accept()
-                .await
-                .expect("Failed to accept a connection");
-
-            hanndle_connection(connection)
-                .await
-                .expect("Failed to handle connection");
-        });
-
-        let mut buf = String::new();
-
-        // Create a client
-        {
-            let mut client = TcpStream::connect(&socket)
-                .await
-                .expect("Client failed to connect");
-
-            let input = br#"{ "method": "isPrime", "number": 30, "yolo": "swag" }"#;
-            client.write_all(input).await.unwrap();
-
-            client.read_to_string(&mut buf).await.unwrap();
-        }
-
-        let output = r#"{"method":"isPrime","prime":false}"#.to_string();
-
-        assert_eq!(buf, output);
+        assert!(handle_request(input).is_err());
     }
 }
