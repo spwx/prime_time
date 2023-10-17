@@ -2,7 +2,8 @@ use std::net::SocketAddr;
 
 use num_bigint::BigInt;
 use num_prime::nt_funcs::is_prime;
-use serde::{de::Error, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
+use serde_json::value::RawValue;
 use thiserror::Error;
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
@@ -20,24 +21,11 @@ pub enum PrimeTimeError {
     JoinError(#[from] tokio::task::JoinError),
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
-struct Request {
+#[derive(Deserialize, Debug)]
+struct Request<'a> {
     method: String,
-    #[serde(deserialize_with = "bigint_from_number")]
-    number: BigInt,
-}
-
-fn bigint_from_number<'de, D>(deserializer: D) -> Result<BigInt, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let n = serde_json::Number::deserialize(deserializer)?;
-    dbg!(&n);
-
-    match BigInt::parse_bytes(n.to_string().as_bytes(), 10) {
-        Some(n) => Ok(n),
-        None => Err(D::Error::custom("Invalid number")),
-    }
+    #[serde(borrow)]
+    number: &'a RawValue,
 }
 
 #[derive(Serialize, Debug, PartialEq)]
@@ -101,11 +89,21 @@ fn handle_request(json: String) -> Result<String, PrimeTimeError> {
     tracing::info!(received = ?json);
 
     let request: Request = serde_json::from_str(&json)?;
+    dbg!(&request);
 
-    let prime = match request.number.into_parts() {
-        (num_bigint::Sign::Minus, _) => false,
-        (_, biguint) => is_prime(&biguint, None).probably(),
-    };
+    let mut prime = false;
+
+    let num = request.number.get();
+    if num.parse::<i64>().is_ok() {
+        prime = false;
+    }
+
+    if let Some(n) = BigInt::parse_bytes(num.as_bytes(), 10) {
+        prime = match n.into_parts() {
+            (num_bigint::Sign::Minus, _) => false,
+            (_, n) => is_prime(&n, None).probably(),
+        }
+    }
 
     let response = Response {
         method: request.method,
@@ -123,45 +121,6 @@ mod tests {
     use tokio::{io::AsyncReadExt, net::TcpListener};
 
     use super::*;
-
-    #[test]
-    fn test_deserialize_request() {
-        let json_data = r#"
-            {
-                "method": "isPrime",
-                "number": 30
-            }
-        "#;
-
-        let expected_request = Request {
-            method: "isPrime".to_string(),
-            number: BigInt::from(30),
-        };
-
-        let request: Request = serde_json::from_str(json_data).unwrap();
-
-        assert_eq!(request, expected_request);
-    }
-
-    #[test]
-    fn test_deserialize_request_extra_fields() {
-        let json = r#"
-            {
-                "method": "isPrime",
-                "number": 30,
-                "yolo": "swag"
-            }
-        "#;
-
-        let expected_request = Request {
-            method: "isPrime".to_string(),
-            number: BigInt::from(30),
-        };
-
-        let request: Request = serde_json::from_str(json).unwrap();
-
-        assert_eq!(request, expected_request);
-    }
 
     #[test]
     fn test_serialize_response() {
@@ -198,8 +157,10 @@ mod tests {
     #[test]
     fn test_handle_request_float() {
         let input = r#"{ "method": "isPrime", "number": 1.234 }"#.to_string();
+        let mut output = r#"{"method":"isPrime","prime":false}"#.to_string();
+        output.push('\n');
 
-        assert!(handle_request(input).is_err());
+        assert_eq!(handle_request(input).unwrap(), output);
     }
 
     #[tokio::test]
