@@ -40,12 +40,12 @@ where
 {
     let num = Number::deserialize(deserializer)?;
 
-    if let Some(f) = num.as_f64() {
-        return Ok(RequestNumber::Float(f));
-    }
-
     if let Some(n) = BigInt::parse_bytes(num.to_string().as_bytes(), 10) {
         return Ok(RequestNumber::BigInt(n));
+    }
+
+    if let Some(f) = num.as_f64() {
+        return Ok(RequestNumber::Float(f));
     }
 
     Err(D::Error::custom("Invalid number value"))
@@ -135,6 +135,24 @@ fn handle_request(json: String) -> Result<String, PrimeTimeError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_handle_request_composite() {
+        let input = r#"{ "method": "isPrime", "number": 18 }"#.to_string();
+        let mut output = r#"{"method":"isPrime","prime":false}"#.to_string();
+        output.push('\n');
+
+        assert_eq!(handle_request(input).unwrap(), output);
+    }
+
+    #[test]
+    fn test_handle_request_prime() {
+        let input = r#"{ "method": "isPrime", "number": 178417 }"#.to_string();
+        let mut output = r#"{"method":"isPrime","prime":true}"#.to_string();
+        output.push('\n');
+
+        assert_eq!(handle_request(input).unwrap(), output);
+    }
 
     #[test]
     fn test_handle_request_extra_fields() {
