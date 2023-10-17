@@ -2,11 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.4.4](https://github.com/orhun/git-cliff/compare/v0.4.3..0.4.4) - 2023-10-17
+## [0.4.5](https://github.com/orhun/git-cliff/compare/v0.4.4..0.4.5) - 2023-10-17
+
+### 🐛 Bug Fixes
+
+- Handle number values with quotes - ([8a4fe15](https://github.com/orhun/git-cliff/commit/8a4fe15ba00c9ec288189b458c1d4fdddb59c20d))
+
+## [0.4.4](https://github.com/orhun/git-cliff/compare/v0.4.3..v0.4.4) - 2023-10-17
 
 ### 🐛 Bug Fixes
 
 - Handle large numbers and number's with decimals, for real - ([970c5a0](https://github.com/orhun/git-cliff/commit/970c5a06eeb7b1205eb3e765fc7804d3ebd924af))
+
+### ⚙️ Miscellaneous Tasks
+
+- Release prime_time version 0.4.4 - ([94d88ff](https://github.com/orhun/git-cliff/commit/94d88fff96d08a74c41419b2e924aa8689f82ad1))
 
 ## [0.4.3](https://github.com/orhun/git-cliff/compare/v0.4.2..v0.4.3) - 2023-10-16
 
