@@ -17,14 +17,19 @@ struct Cli {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Setup error handling with color output
     color_eyre::install()?;
 
+    // Setup a tracing subscriber that prints logs to stdout
     tracing_subscriber::fmt::init();
 
+    // get CLI args
     let cli = Cli::parse();
 
+    // create socket address
     let socket = SocketAddr::new(cli.ip, cli.port);
 
+    // run the server
     prime_time::run(socket).await?;
 
     Ok(())
